@@ -256,9 +256,9 @@ export class SqlStorageService {
 		});
 	}
 
-	public dropTable (tableName: string): Promise<any> {
+	public dropTable (tableName: string): SqlStorageService {
 		this._query = 'DROP TABLE IF EXISTS ' + tableName;
-		return this.execute(this._query);
+		return this;
 	}
 
 	public getQuery (): string {
