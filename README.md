@@ -33,9 +33,11 @@ this.sqlService.insert('myNewTable', {
 #### Update data:
 ```typescript
 this.sqlService.update('myNewTable', {
-	'name': 'Bruce',
-	'lastName': 'Wayne'
-}).execute(); // Return a promise
+		'name': 'Bruce',
+		'lastName': 'Wayne'
+	})
+	.where([{ 'field': 'id', 'value': 1, 'operator': '=', 'table': 'myNewTable' }])
+	.execute(); // Return a promise
 ```
 
 #### Find data:
@@ -43,7 +45,7 @@ this.sqlService.update('myNewTable', {
 ```typescript
 this.sqlService.find('myNewTable', []).execute(); // Return a promise
 ```
-###### Simple find usign specific fields
+###### Simple find returning specific fields
 ```typescript
 this.sqlService.find('myNewTable', ['name', 'lastname']).execute(); // Return a promise
 ```
