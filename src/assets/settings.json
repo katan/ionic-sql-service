@@ -1,0 +1,17 @@
+{
+	"SQL": {
+		"tables": [
+			"tableA",
+			"tableB",
+			"tableC"
+		],
+		"fields": {
+			"tableA": ["fieldA TEXT","fieldB TEXT","unixtime INTEGER"],
+			"tableB": ["tableAid INTEGER","fieldA TEXT","unixtime INTEGER",
+				["tableAid","tableA","id"]],
+			"tableC": ["tableAid INTEGER","tableBid INTEGER","unixtime INTEGER",
+				["tableAid","tableA","id"],
+				["tableBid","tableB","id"]]
+		}
+	}
+}
