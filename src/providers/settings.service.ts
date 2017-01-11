@@ -4,36 +4,37 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 
 /**
- * Service for local storage.
- * The local storage should be use only for a current session.
+ * Simple service to load settings from a file.
  */
 @Injectable()
 export class SettingsService {
-	public static SETTINGS_URL: string = "assets/settings.json";
+	private filePath: string;
 	private _loadSettings: Observable<any>;
 	private _settings: any;
 
 	constructor (private http: Http) {
 		try {
+	        this._settings = {};
 			this._loadSettings = new Observable(observer => {
-				if (this._settings) {
-					observer.complete();
-				} else {
-			        this._settings = {};
-					this.http.get(SettingsService.SETTINGS_URL)
-						.map(res => res.json())
-			            .subscribe(data => {
-			                this.setObject(data);
-			                observer.complete();
-			            });
-				}
+				this.http.get(this.filePath)
+					.map(res => res.json())
+		            .subscribe(data => {
+		                this.setObject(data);
+		                observer.complete();
+		            });
 			});
 		} catch (error) {
 			throw new Error(error.message);
 		}
 	}
 
-	public load(): Promise<any> {
+	/**
+	 * Load the file
+	 * @param  {string}       filePath
+	 * @return {Promise<any>}
+	 */
+	public load(filePath: string): Promise<any> {
+		this.filePath = filePath;
 		return new Promise((resolve, reject) => {
 			try {
 				this._loadSettings.subscribe(
@@ -48,36 +49,52 @@ export class SettingsService {
 		})
 	}
 
+	/**
+	 * 
+	 * @param  {string = undefined}   key [description]
+	 * @return {Promise<any>}
+	 */
 	public get(key: string = undefined): Promise<any> {
 		return new Promise((resolve, reject) => {
 			try {
-				this._loadSettings.subscribe( (value) => {}, (error) => {},
-					()=> {
-						if (key && this._settings[key]) {
-							resolve(this._settings[key]);
-						}
-						if (key && key.indexOf('.') > 0) {
-							resolve(this._interpolateKey(key) || this._settings);
-						}
-						resolve(this._settings);
-					});
+					if (key && this._settings[key]) {
+						resolve(this._settings[key]);
+					}
+					if (key && key.indexOf('.') > 0) {
+						resolve(this._interpolateKey(key) || this._settings);
+					}
+					resolve(this._settings);
 			} catch (error) {
 				reject({error: error});
 			}
 		});
 	}
 
+	/**
+	 * Set a key and their value on the root of the service
+	 * @param {string} key   [description]
+	 * @param {any}    value [description]
+	 */
 	public set(key: string, value: any): void {
 		this._settings[key] = value;
 	}
 
-	public setObject (object: any): void {
+	/**
+	 * Set a javascript object on the root of the service
+	 * @param {any} object 		example: { 'mykey1':'myValue1', 'mykey2':'myValue2', ... }
+	 */
+	public setObject (object: Object): void {
 		for (let key in object) {
 			this.set(key, object[key]);
 		}
 	}
 
-	private _interpolateKey (key): string {
+	/**
+	 * Search the value through a interpolate key
+	 * @param  {string} key 	path to value, examples: "path1.myKey", "path1.path2.myKey", ...
+	 * @return {string}			the value
+	 */
+	private _interpolateKey (key:string): string {
 		let _value: any;
 		let _keys = key.split('.');
 
@@ -86,6 +103,6 @@ export class SettingsService {
 			else _value = _value[_keys[i]];
 		}
 
-		return _value;
+		return _value || '';
 	}
 }

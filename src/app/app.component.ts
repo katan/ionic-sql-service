@@ -23,7 +23,15 @@ export class MyApp {
             Splashscreen.hide();
 
             // Load settings from json file
-            this.settings.load().then(() => {
+            this.settings.load("assets/settings.json").then(() => {
+
+                // Join another settings from a different config file
+                this.settings.load("assets/another-settings.json").then(() => {
+                    let joinSettings = this.settings.get().then(
+                        (settings) => {
+                            console.log(settings);
+                        });
+                });
 
                 // Set sql schema from settings
                 this.sqlService.setSqlSchema('SQL.tables', 'SQL.fields').then(()=>{
