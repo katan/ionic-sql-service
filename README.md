@@ -12,6 +12,28 @@ More info on this can be found on the Ionic [Getting Started](http://ionicframew
 
 This provider use another one called settingsService for separate the database schema in a external config file, but you can leave out it.
 
+## Database schema setting
+
+The database schema are the same using or not the setting provider.
+There two arrays, one of them, the list of the tables available, the other one the list of fields for every table and their references with the others.
+
+#### Tables
+```typescript
+let tables = ["tableA","tableB","tableC"];
+```
+
+#### Fields and their references
+```typescript
+let fields = {
+	"tableA": ["fieldA TEXT","fieldB TEXT","unixtime INTEGER"], // Table without references
+	"tableB": ["tableAid INTEGER","fieldA TEXT","unixtime INTEGER", // Table with references
+		["tableAid","tableA","id"]], // 0 => foreign key, 1 => reference table, 2 => reference key
+	"tableC": ["tableAid INTEGER","tableBid INTEGER","unixtime INTEGER",
+		["tableAid","tableA","id"], // Adding more references
+		["tableBid","tableB","id"]]
+};
+```
+
 ## Using this SQL Service
 
 You can see a basic use on _app/app.component.ts_ checking if table exists or is the first time _(or also the user has removed data)_ creating the database schema. It's usefull for a welcome page for example.
@@ -49,7 +71,7 @@ this.sqlService.find('myNewTable', []).execute(); // Return a promise
 ```typescript
 this.sqlService.find('myNewTable', ['name', 'lastname']).execute(); // Return a promise
 ```
-###### Simple find usgin order by and group by
+###### Simple find using order by and group by
 ```typescript
 this.sqlService.find('myNewTable', ['name', 'lastname'])
 	.groupBy(['category'])
