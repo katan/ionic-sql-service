@@ -27,7 +27,7 @@ export class MyApp {
 
                 // Join another settings from a different config file
                 this.settings.load("assets/another-settings.json").then(() => {
-                    let joinSettings = this.settings.get().then(
+                    this.settings.get().then(
                         (settings) => {
                             console.log(settings);
                         });
@@ -68,7 +68,7 @@ export class MyApp {
                                                         })
                                                     .then(() => {
                                                         // Join query
-                                                        let joinRes = this.sqlService
+                                                        this.sqlService
                                                             .find(['tableA', 'A'], []) // Empty array to select all fields
                                                             .join('INNER', ['tableB', 'B'], { from: 'A.id', operator: '=', to: 'B.tableAid' })
                                                             .orderBy(['A.id'], 'ASC')
