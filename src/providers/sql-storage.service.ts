@@ -160,7 +160,7 @@ export class SqlStorageService {
 			this._query += ' DISTINCT';
 		}
 
-		if (fields && fields.length > 1) {
+		if (fields && fields.length > 0) {
 			for (let field of fields) {
 				this._query += ' ' + field +',';
 			}
