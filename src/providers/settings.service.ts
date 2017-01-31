@@ -63,7 +63,7 @@ export class SettingsService {
 					if (key && key.indexOf('.') > 0) {
 						resolve(this._interpolateKey(key) || this._settings);
 					}
-					resolve(this._settings);
+					!key && resolve(this._settings) ||  reject('No key exists');
 			} catch (error) {
 				reject({error: error});
 			}
