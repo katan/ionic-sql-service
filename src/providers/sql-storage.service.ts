@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SQLite } from 'ionic-native';
+import { SQLite } from '@ionic-native/sqlite';
 
 import { SettingsService } from '../providers/index';
 

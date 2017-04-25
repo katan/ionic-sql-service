@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Platform } from 'ionic-angular';
-import { StatusBar, Splashscreen } from 'ionic-native';
+import { StatusBar } from '@ionic-native/status-bar';
+import { SplashScreen } from '@ionic-native/splash-screen';
 
 import { TabsPage } from '../pages/tabs/tabs';
 
@@ -15,12 +16,18 @@ import {
 export class MyApp {
     rootPage = TabsPage;
 
-    constructor(platform: Platform, private sqlService: SqlStorageService, private settings: SettingsService,) {
+    constructor(
+        private platform: Platform,
+        private statusBar: StatusBar,
+        private splashScreen: SplashScreen,
+        private sqlService: SqlStorageService,
+        private settings: SettingsService)
+    {
         platform.ready().then(() => {
             // Okay, so the platform is ready and our plugins are available.
             // Here you can do any higher level native things you might need.
-            StatusBar.styleDefault();
-            Splashscreen.hide();
+            this.statusBar.styleDefault();
+            this.splashScreen.hide();
 
             // Load settings from json file
             this.settings.load("assets/settings.json").then(() => {

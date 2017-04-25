@@ -1,12 +1,13 @@
-Ionic 2 sql service
+Ionic SQL service
 =====================
 
-This is another SQLite provider solution write in typerscript for Ionic 2.
+This is another SQLite provider solution write in typerscript for Ionic version 2 & 3.
+The master branch have the latest Ionic version supported (3.x.x), use the tags to get other versions like 2.3.0
 
 ## Using this project
 
-You'll need the last Ionic CLI with support for v2 apps:
-More info on this can be found on the Ionic [Getting Started](http://ionicframework.com/docs/v2/getting-started/) page.
+You'll need the last Ionic CLI:
+More info on this can be found on the Ionic [Getting Started](http://ionicframework.com/getting-started) page.
 
 ## Dependencies
 
