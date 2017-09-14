@@ -62,7 +62,9 @@ export class MyApp {
 
                                                 // Update data table A
                                                 let newData: Object =  { 'fieldA': 'Dick', 'fieldB': 'Tracy' };
-                                                this.sqlService.update('tableA', newData).execute()
+                                                this.sqlService.update('tableA', newData)
+                                                    .where ([{ field: 'id', operator: '=', value: 1, table: 'tableA' }])
+                                                    .execute()
                                                     .then((data: any) => {
                                                             if (data.res.rowsAffected > 0) {
                                                                 console.log('data updated');
