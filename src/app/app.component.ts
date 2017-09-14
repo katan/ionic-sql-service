@@ -108,10 +108,16 @@ export class MyApp {
 
     private insertSomeData (): Promise<any> {
         // Data to insert
-        let tableA: Object = {
+        let tableA1: Object = {
             id: 1,
             fieldA: 'hello',
             fieldB: 'world',
+            unixtime: Date.now()
+        }
+        let tableA2: Object = {
+            id: 2,
+            fieldA: 'hello',
+            fieldB: 'world 2',
             unixtime: Date.now()
         }
         let tableB: Object = {
@@ -126,8 +132,9 @@ export class MyApp {
             tableBid: 1,
             unixtime: Date.now()
         }
+        let tabbleAmultipleInserts: Object[] = [tableA1,tableA2];
 
-        return this.sqlService.insert('tableA', tableA).execute()
+        return this.sqlService.insert('tableA', tabbleAmultipleInserts).execute()
             .then(() => this.sqlService.insert('tableB', tableB).execute())
             .then(() => this.sqlService.insert('tableC', tableC).execute())
             .catch((error) => {

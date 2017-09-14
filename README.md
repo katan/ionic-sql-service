@@ -45,12 +45,18 @@ You can see a basic use on _app/app.component.ts_ checking if table exists or is
 this.sqlService.create('myNewTable').execute(); // Return a promise
 ```
 
-#### Insert data:
+#### Insert a single data:
 ```typescript
 this.sqlService.insert('myNewTable', {
 	'name': 'Dick',
 	'lastName': 'Tracy'
 }).execute(); // Return a promise
+```
+
+#### Insert a multiple data: *(from the @pablopereira27 fork)*
+```typescript
+let multipleInserts: Object[] = [{'name': 'Dick','lastName': 'Tracy'},{'name': 'Big Boy','lastName': 'Caprice'}];
+this.sqlService.insert('myNewTable', multipleInserts).execute(); // Return a promise
 ```
 
 #### Update data:

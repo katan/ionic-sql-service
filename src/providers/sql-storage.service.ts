@@ -85,27 +85,13 @@ export class SqlStorageService {
 
 	public insert (tableName: string, values: any): SqlStorageService {
 		if (this._hasTable(tableName)) {
-			this._query = 'INSERT INTO ' + tableName + ' (';
-			// Add fields
-			for (let field in values) {
-				this._query += field +', ';
+			// Check multiple inserts or single
+			if(values instanceof Array) {
+				this._multipleInsert (tableName, values);
+			} 
+			else {
+				this._singleInsert (tableName, values);
 			}
-			this._query = this._query.substring(this._query.length-2, 0);
-			this._query += ') VALUES (';
-
-			// Add values
-			for (let field in values) {
-				// Check if string
-				if (this._getFieldType(tableName, field) === "TEXT") {
-					this._query += '\"' + values[field] +'\", ';
-				}
-				// Is a number 
-				else {
-					this._query += values[field] +', ';
-				}
-			}
-			this._query = this._query.substring(this._query.length-2, 0);
-			this._query += ');';
 		}
 		return this;
 	}
@@ -278,5 +264,72 @@ export class SqlStorageService {
 			return searchResult[0].split(' ')[1] || 'INTEGER';
 		}
 		return 'INTEGER';
+	}
+
+	private _singleInsert (tableName: string, values: any) {
+		this._query = 'INSERT INTO ' + tableName + ' (';
+
+		// Add fields
+		for (let field in values) {
+			this._query += field +', ';
+		}
+
+		this._query = this._query.substring(this._query.length-2, 0);
+		this._query += ') VALUES (';
+
+		// Add values
+		for (let field in values) {
+			// Check if string
+			if (this._getFieldType(tableName, field) === "TEXT") {
+				this._query += '\"' + values[field] +'\", ';
+			}
+			// Is a number 
+			else {
+				this._query += values[field] +', ';
+			}
+		}
+
+		this._query = this._query.substring(this._query.length-2, 0);
+		this._query += ');';
+	}
+
+	/**
+	 * Receives an array of objects and add several rows in the same insert
+	 * @param {string} tableName
+	 * @param {any[]}  values    Array of objects to insert
+	 */
+	private _multipleInsert (tableName: string, values: any[]) {
+		for (let i = 0; i < values.length; i++) {
+			if(i == 0) {
+				this._query = 'INSERT INTO ' + tableName + ' (';
+
+				for (let field in values[i]) {
+					this._query += field +', ';
+				}
+
+				this._query = this._query.substring(this._query.length-2, 0);
+				this._query += ') VALUES';
+			}
+
+			this._query += ' (';
+
+			let row = values[i];
+
+			// Add values
+			for (let field in row) {
+				// Check if string
+				if (this._getFieldType(tableName, field) === "TEXT") {
+					this._query += '\"' + row[field] +'\", ';
+				}
+				// Is a number 
+				else {
+					this._query += row[field] +', ';
+				}
+			}
+
+			this._query = this._query.substring(this._query.length-2, 0);
+			this._query += ')';
+			this._query += (i == values.length - 1) ? ';' : ',';
+		}
 	}
 }
