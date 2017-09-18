@@ -18,6 +18,7 @@ export class SqlStorageService {
 	private _db: any; // SQLite / WebSQL
 	private _tables: string[];
 	private _fields: any;
+	private _transaction: boolean = false;
 
 	constructor(private settings: SettingsService) {
 		try {
@@ -59,10 +60,16 @@ export class SqlStorageService {
 		return Promise.reject('QUERY_NO_TABLE');
 	}
 
+	public beginTransaction (status: boolean): SqlStorageService {
+		this._query = "BEGIN TRANSACTION;";
+		this._transaction = status;
+		return this;
+	}
+
 	public create (tableName: string): SqlStorageService {
 		if (this._hasTable(tableName)) {
-
-			this._query = 'CREATE TABLE IF NOT EXISTS ' + tableName + '(id INTEGER PRIMARY KEY AUTOINCREMENT';
+			let query: string;
+			query = 'CREATE TABLE IF NOT EXISTS ' + tableName + '(id INTEGER PRIMARY KEY AUTOINCREMENT';
 			for (let field of this._fields[tableName]) {
 				// create foreign keys
 				if (Array.isArray(field)) {
@@ -73,12 +80,13 @@ export class SqlStorageService {
 						if (pos === "1") foreingKey += ' REFERENCES '+ field[pos];
 						if (pos === "2") foreingKey += '('+ field[pos] +')';
 					}
-					this._query += foreingKey + " ON DELETE CASCADE";
+					query += foreingKey + " ON DELETE CASCADE";
 				} else {
-					this._query += ', '+ field;
+					query += ', '+ field;
 				}
 			}
-			this._query += ');';
+			query += ');';
+			this._setQuery(query);
 		}
 		return this;
 	}
@@ -98,23 +106,26 @@ export class SqlStorageService {
 
 	public update (tableName: string, values: any): SqlStorageService {
 		if (this._hasTable(tableName)) {
-			this._query = 'UPDATE ' + tableName + ' SET';
+			let query: string;
+			query = 'UPDATE ' + tableName + ' SET';
 
 			for (let field in values) {
 				if (this._getFieldType(tableName, field) === "TEXT") {
-					this._query += ' ' + field + '=\"' + values[field] + '\",';
+					query += ' ' + field + '=\"' + values[field] + '\",';
 				} else {
-					this._query += ' ' + field + '=' + values[field] + ',';
+					query += ' ' + field + '=' + values[field] + ',';
 				}
 			}
-			this._query = this._query.substring(this._query.length-1, 0);
+			query = query.substring(query.length-1, 0);
+			this._setQuery(query);
 		}
 		return this;
 	}
 
 	public delete (tableName: string): SqlStorageService {
 		if (this._hasTable(tableName)) {
-			this._query = 'DELETE FROM ' + tableName;
+			let query: string = 'DELETE FROM ' + tableName;
+			this._setQuery(query);
 		}
 		return this;
 	}
@@ -141,19 +152,21 @@ export class SqlStorageService {
 	 * @return {SqlStorageService}
 	 */
 	public select (fields: string[], distinct:boolean = false): SqlStorageService {
-		this._query = 'SELECT';
+		let query: string;
+		query = 'SELECT';
 		if (distinct) {
-			this._query += ' DISTINCT';
+			query += ' DISTINCT';
 		}
 
 		if (fields && fields.length > 0) {
 			for (let field of fields) {
-				this._query += ' ' + field +',';
+				query += ' ' + field +',';
 			}
-			this._query = this._query.substring(this._query.length-1, 0);
+			query = query.substring(query.length-1, 0);
 		} else {
-			this._query +=' *';
+			query +=' *';
 		}
+		this._setQuery(query);
 		return this;
 	}
 
@@ -221,19 +234,19 @@ export class SqlStorageService {
 			try {
 				this._db.transaction(
 					(tx: any) => {
-						
-						console.log(query || this._query); // TODO Remove
-
-						tx.executeSql((query || this._query), params,
+						let _query: string = (query || this._query);
+						if (this._transaction) {
+							_query += "END TRANSACTION;";
+						}
+						tx.executeSql(_query, params,
 							(tx: any, res: any) => resolve({tx: tx, res: res}),
 							(tx: any, error: any) => reject({tx: tx, error: error})
 						);
+						this._transaction = false;
 				  	},
 					(error: any) => {
-
-						console.log(query || this._query); // TODO Remove
-
-						reject({error: error || 'QUERY_UNKNOWN'})
+						this._transaction = false;
+						reject({error: error || 'QUERY_UNKNOWN'});
 					}
 				);
 			} catch (error) {
@@ -243,7 +256,8 @@ export class SqlStorageService {
 	}
 
 	public dropTable (tableName: string): SqlStorageService {
-		this._query = 'DROP TABLE IF EXISTS ' + tableName;
+		let query: string = 'DROP TABLE IF EXISTS ' + tableName;
+		this._setQuery(query);
 		return this;
 	}
 
@@ -267,30 +281,32 @@ export class SqlStorageService {
 	}
 
 	private _singleInsert (tableName: string, values: any) {
-		this._query = 'INSERT INTO ' + tableName + ' (';
+		let query: string;
+		query = 'INSERT INTO ' + tableName + ' (';
 
 		// Add fields
 		for (let field in values) {
-			this._query += field +', ';
+			query += field +', ';
 		}
 
-		this._query = this._query.substring(this._query.length-2, 0);
-		this._query += ') VALUES (';
+		query = query.substring(query.length-2, 0);
+		query += ') VALUES (';
 
 		// Add values
 		for (let field in values) {
 			// Check if string
 			if (this._getFieldType(tableName, field) === "TEXT") {
-				this._query += '\"' + values[field] +'\", ';
+				query += '\"' + values[field] +'\", ';
 			}
 			// Is a number 
 			else {
-				this._query += values[field] +', ';
+				query += values[field] +', ';
 			}
 		}
 
-		this._query = this._query.substring(this._query.length-2, 0);
-		this._query += ');';
+		query = query.substring(query.length-2, 0);
+		query += ');';
+		this._setQuery(query);
 	}
 
 	/**
@@ -299,19 +315,20 @@ export class SqlStorageService {
 	 * @param {any[]}  values    Array of objects to insert
 	 */
 	private _multipleInsert (tableName: string, values: any[]) {
+		let query: string;
 		for (let i = 0; i < values.length; i++) {
 			if(i == 0) {
-				this._query = 'INSERT INTO ' + tableName + ' (';
+				query = 'INSERT INTO ' + tableName + ' (';
 
 				for (let field in values[i]) {
-					this._query += field +', ';
+					query += field +', ';
 				}
 
-				this._query = this._query.substring(this._query.length-2, 0);
-				this._query += ') VALUES';
+				query = query.substring(query.length-2, 0);
+				query += ') VALUES';
 			}
 
-			this._query += ' (';
+			query += ' (';
 
 			let row = values[i];
 
@@ -319,17 +336,26 @@ export class SqlStorageService {
 			for (let field in row) {
 				// Check if string
 				if (this._getFieldType(tableName, field) === "TEXT") {
-					this._query += '\"' + row[field] +'\", ';
+					query += '\"' + row[field] +'\", ';
 				}
 				// Is a number 
 				else {
-					this._query += row[field] +', ';
+					query += row[field] +', ';
 				}
 			}
 
-			this._query = this._query.substring(this._query.length-2, 0);
-			this._query += ')';
-			this._query += (i == values.length - 1) ? ';' : ',';
+			query = query.substring(query.length-2, 0);
+			query += ')';
+			query += (i == values.length - 1) ? ';' : ',';
+		}
+		this._setQuery(query);
+	}
+
+	private _setQuery (query: string) {
+		if (this._transaction) {
+			this._query += query;
+		} else {
+			this._query = query;
 		}
 	}
 }
