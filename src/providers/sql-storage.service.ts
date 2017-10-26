@@ -19,6 +19,7 @@ export class SqlStorageService {
 	private _tables: string[];
 	private _fields: any;
 	private _transaction: boolean = false;
+	private _transactionAvailability: boolean = false;
 
 	constructor(private settings: SettingsService) {
 		try {
@@ -29,6 +30,7 @@ export class SqlStorageService {
 					name: DB_NAME,
 					location: DB_LOCATION // the location field is required
 				});
+				this._transactionAvailability = true; // Requires android 4.1 or higher
 			} else {
 				// webSQL wrapper
 				this._db = win.openDatabase(DB_NAME, '1.0', 'database', 5 * 1024 * 1024);
@@ -61,9 +63,15 @@ export class SqlStorageService {
 	}
 
 	public beginTransaction (status: boolean): SqlStorageService {
-		this._query = "BEGIN TRANSACTION;";
-		this._transaction = status;
+		if (this._transactionAvailability) {
+			this._query = "BEGIN TRANSACTION;";
+			this._transaction = status;
+		}
 		return this;
+	}
+
+	public hasTransaction (): boolean {
+		return this._transactionAvailability
 	}
 
 	public create (tableName: string): SqlStorageService {
@@ -111,7 +119,8 @@ export class SqlStorageService {
 
 			for (let field in values) {
 				if (this._getFieldType(tableName, field) === "TEXT") {
-					query += ' ' + field + '=\"' + values[field] + '\",';
+					let value = values[field] || "";
+					query += ' ' + field + '=\'' + value.toString().replace(/'/g, "''") + '\',';
 				} else {
 					query += ' ' + field + '=' + values[field] + ',';
 				}
@@ -235,18 +244,24 @@ export class SqlStorageService {
 				this._db.transaction(
 					(tx: any) => {
 						let _query: string = (query || this._query);
-						if (this._transaction) {
+						if (this._transaction && this._transactionAvailability) {
 							_query += "END TRANSACTION;";
 						}
+
+						console.log(_query);
+
 						tx.executeSql(_query, params,
 							(tx: any, res: any) => resolve({tx: tx, res: res}),
 							(tx: any, error: any) => reject({tx: tx, error: error})
 						);
-						this._transaction = false;
+						this._transaction = false; // Remove transaction condition
 				  	},
 					(error: any) => {
-						this._transaction = false;
-						reject({error: error || 'QUERY_UNKNOWN'});
+						
+						console.log(query || this._query);
+
+						this._transaction = false; // Remove transaction condition
+						reject({error: error || 'QUERY_UNKNOWN'})
 					}
 				);
 			} catch (error) {
@@ -296,7 +311,8 @@ export class SqlStorageService {
 		for (let field in values) {
 			// Check if string
 			if (this._getFieldType(tableName, field) === "TEXT") {
-				query += '\"' + values[field] +'\", ';
+				let value = values[field] || "";
+				query += '\'' + value.toString().replace(/'/g, "''") +'\', ';
 			}
 			// Is a number 
 			else {
@@ -336,7 +352,8 @@ export class SqlStorageService {
 			for (let field in row) {
 				// Check if string
 				if (this._getFieldType(tableName, field) === "TEXT") {
-					query += '\"' + row[field] +'\", ';
+					let value = row[field] || "";
+					query += '\'' + value.toString().replace(/'/g, "''") +'\', ';
 				}
 				// Is a number 
 				else {
