@@ -113,6 +113,19 @@ this.sqlService
 	.execute(); // Return a promise
 ```
 
+#### Transactions
+
+You can use transactions but only works over Android 4.1 or higher. **Over Web SQL don't works!**
+```typescript
+if (this.sqlService.hasTransaction()){
+  this.sqlService.beginTransaction(true)
+    .insert('myNewTable', {'name': 'Dick','lastName': 'Tracy'})
+    .insert('myNewTable', {'name': 'Bruce','lastName': 'way'})
+    .update('myNewTable', {'lastName': 'Wayne'})
+    .execute();
+}
+```
+
 #### Delete data:
 ```typescript
 this.sqlService.delete('myNewTable')
